@@ -1,0 +1,68 @@
+name: Publish market dashboard
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      refresh:
+        description: Collect latest market data before publishing
+        type: boolean
+        default: false
+  schedule:
+    - cron: '17 10 * * 1-5'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: |
+          python -m pip install -r requirements-lock.txt
+          npm install --global pnpm@11.19.0
+          pnpm install --frozen-lockfile
+      - name: Validate Python and TypeScript implementations
+        run: |
+          python -m pytest -q
+          node node_modules/typescript/bin/tsc --noEmit
+          python scripts/parity_fixtures.py
+          node scripts/test_static.mjs
+      - name: Preserve the latest published market snapshot
+        run: python scripts/restore_published.py
+      - name: Collect latest market snapshot
+        if: github.event_name == 'schedule' || inputs.refresh == true
+        run: python scripts/update_pages.py
+      - name: Build GitHub Pages site
+        env:
+          BUILD_TARGET: pages
+        run: node build.mjs
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist-pages
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

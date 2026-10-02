@@ -1,0 +1,10 @@
+.deps/
+.venv/
+node_modules/
+/data/
+__pycache__/
+.pytest_cache/
+dist/
+dist-pages/
+public-pages/data/market-*.json
+.test-artifacts/
