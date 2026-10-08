@@ -1,0 +1,15 @@
+import fs from 'node:fs/promises';
+import ts from 'typescript';
+import assert from 'node:assert/strict';
+await fs.mkdir('.test-artifacts',{recursive:true});
+const code=await fs.readFile('src/static-engine.ts','utf8');
+await fs.writeFile('.test-artifacts/freshness-engine.mjs',ts.transpileModule(code,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText);
+const {marketFreshness}=await import('../.test-artifacts/freshness-engine.mjs');
+const s={end:'2026-09-30',calendar:['2026-09-30','2026-10-08','2026-10-09','2026-10-12']};
+assert.equal(marketFreshness(s,new Date('2026-10-07T20:00:00+08:00')).stale,false);
+assert.equal(marketFreshness(s,new Date('2026-10-08T17:59:59+08:00')).stale,false);
+assert.deepEqual(marketFreshness(s,new Date('2026-10-08T18:00:00+08:00')),{expected:'2026-10-08',stale:true,calendarExpired:false});
+assert.equal(marketFreshness(s,new Date('2026-10-09T00:30:00+08:00')).expected,'2026-10-08');
+assert.equal(marketFreshness({...s,end:'2026-10-08'},new Date('2026-10-09T00:30:00+08:00')).stale,false);
+assert.equal(marketFreshness(s,new Date('2026-10-13T00:30:00+08:00')).calendarExpired,true);
+console.log('Freshness checks passed: October reopening, 18:00 cutoff, midnight, holidays, expired calendar');

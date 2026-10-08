@@ -44,6 +44,7 @@ jobs:
           python scripts/parity_fixtures.py
           node scripts/test_static.mjs
           node scripts/test_cloudflare.mjs
+          node scripts/test_freshness.mjs
       - name: Preserve the latest published market snapshot
         run: python scripts/restore_published.py
       - name: Collect latest market snapshot

@@ -2,6 +2,12 @@ export type Bar = {close:number;adjusted:number;volume:number};
 export type Stock = {code:string;name:string;board:string};
 export type Snapshot={id:string;end:string;updated_at:string;source:string;calendar:string[];index:Record<string,number>;stocks:Stock[];bars:Record<string,Record<string,Bar>>;errors:Record<string,string>};
 export type Options={end?:string;window:number;mode:string;direction:string;board:string;stock_min:number;index_min:number;search:string;sort:string;descending:boolean};
+export function marketFreshness(s:Pick<Snapshot,'calendar'|'end'>,now=new Date()){
+ const beijing=new Date(now.getTime()+8*3600000),today=beijing.toISOString().slice(0,10);
+ const cutoff=beijing.getUTCHours()>=18?today:new Date(beijing.getTime()-86400000).toISOString().slice(0,10);
+ const expected=s.calendar.filter(d=>d<=cutoff).at(-1);
+ return {expected,stale:!!expected&&s.end<expected,calendarExpired:!s.calendar.length||today>s.calendar.at(-1)!};
+}
 export function compare(stock:Record<string,Bar>,index:Record<string,number>,dates:string[]){
  if(dates.some(d=>!stock[d]))throw Error('缺少交易日行情或上市时间不足');
  const bars=dates.map(d=>stock[d]);

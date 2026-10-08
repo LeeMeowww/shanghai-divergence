@@ -1,4 +1,4 @@
-import {screen,compare,options,csv,type Snapshot} from './static-engine';
+import {screen,compare,options,csv,marketFreshness,type Snapshot} from './static-engine';
 import {CLOUD_MODE} from './runtime';
 type Manifest={id:string;end:string;updated_at:string;source:string;file:string;stock_count:number;downloaded:number;errors:number;first_date:string;calendar_end:string;update?:{state:string;at:string}|null};
 let current:Manifest|undefined;
@@ -8,8 +8,9 @@ async function load(id?:string){if(!current)await manifest();const key=id||curre
 export async function request(path:string):Promise<unknown>{
  const u=new URL(path,'https://local.invalid'),q=u.searchParams;
  if(u.pathname==='/api/status'||u.pathname==='/api/refresh'){
- const m=await manifest(),failed=m.update&&['failure','timed_out','cancelled'].includes(m.update.state),note=failed?'最近后台任务未成功，保留上次行情':m.update?.state==='running'?'后台正在更新，当前显示上次行情':CLOUD_MODE&&!m.update?'暂时无法确认后台任务状态，当前显示已发布行情':'后台收盘后自动更新';
- const job={id:m.id,state:failed?'failed':m.errors?'partial':'complete',stage:'已发布行情',done:m.downloaded,total:m.stock_count,success:m.downloaded,failed:m.errors,message:`${note} · 行情截至 ${m.end}；每分钟检查新批次`};
+ const m=await manifest(),fresh=marketFreshness(await load(m.id)),failed=m.update&&['failure','timed_out','cancelled'].includes(m.update.state);
+ const note=fresh.calendarExpired?'交易日历已过期，无法确认最新交易日':fresh.stale?`行情尚未更新：应更新至 ${fresh.expected}，当前仍为 ${m.end}`:failed?'最近后台任务未成功，保留上次行情':m.update?.state==='running'?'后台任务运行中，当前显示已发布行情':CLOUD_MODE&&!m.update?'暂时无法确认后台任务状态，当前显示已发布行情':'后台收盘后自动更新';
+ const job={id:m.id,state:failed||fresh.stale||fresh.calendarExpired?'failed':m.errors?'partial':'complete',stage:fresh.stale?'数据更新滞后':'已发布行情',done:m.downloaded,total:m.stock_count,success:m.downloaded,failed:m.errors,message:`${note} · 行情截至 ${m.end}；每分钟检查新批次`};
  if(u.pathname==='/api/refresh')return job;
  return {batch:{id:m.id,end_date:m.end,created:m.updated_at},job,stock_count:m.stock_count,downloaded:m.downloaded,errors:m.errors,first_date:m.first_date,calendar_end:m.calendar_end};}
  const s=await load(q.get('batch_id')||undefined),p=options(q);
