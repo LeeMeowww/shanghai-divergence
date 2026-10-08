@@ -47,7 +47,7 @@ jobs:
       - name: Preserve the latest published market snapshot
         run: python scripts/restore_published.py
       - name: Collect latest market snapshot
-        if: github.event_name == 'schedule' || inputs.refresh == true
+        if: github.event_name != 'workflow_dispatch' || inputs.refresh == true
         run: python scripts/update_pages.py
       - name: Build GitHub Pages site
         env:
