@@ -1,0 +1,10 @@
+{
+  "name": "shanghai-divergence",
+  "account_id": "716e9d93333f60028624fb90d3f8c50a",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "no_bundle": true,
+  "assets": {"directory": "../dist-cloudflare", "binding": "ASSETS", "run_worker_first": true},
+  "observability": {"enabled": true}
+}

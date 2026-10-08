@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import {handle} from '../cloudflare/worker.mjs';
+const env={ASSETS:{fetch:async req=>new Response(new URL(req.url).pathname)}};
+const request=(path,init)=>new Request('https://yuki23.me'+path,init);
+assert.equal((await handle(request('/'),env)).status,404);
+assert.equal((await handle(request('/shanghai-divergence-other'),env)).status,404);
+assert.equal((await handle(request('/shanghai-divergence?x=1'),env)).headers.get('Location'),'https://yuki23.me/shanghai-divergence/?x=1');
+assert.equal(await (await handle(request('/shanghai-divergence/assets/app.js'),env)).text(),'/assets/app.js');
+assert.equal((await handle(request('/shanghai-divergence/api/refresh',{method:'POST'}),env)).status,405);
+const manifest={id:'abcd1234',file:'market-abcd1234.json.gz',end:'2026-09-30'};
+let target;
+const ok=await handle(request('/shanghai-divergence/api/market',{headers:{Cookie:'private'}}),env,async(url,init)=>{if(url.includes('api.github.com'))return Response.json({workflow_runs:[{status:'completed',conclusion:'failure',updated_at:'2026-10-08T10:00:00Z'}]});target=url;assert.equal(init.headers.Cookie,undefined);return Response.json(manifest)});
+assert.deepEqual(await ok.json(),{...manifest,update:{state:'failure',at:'2026-10-08T10:00:00Z'}});assert.equal(ok.headers.get('Cache-Control'),'no-store');assert.ok(target.startsWith('https://leemeowww.github.io/shanghai-divergence/data/manifest.json?'));
+assert.equal((await handle(request('/shanghai-divergence/api/market'),env,async()=>new Response('',{status:500}))).status,503);
+assert.equal((await handle(request('/shanghai-divergence/api/market'),env,async()=>Response.json({...manifest,file:'https://evil.example'}))).status,503);
+assert.equal((await handle(request('/shanghai-divergence/data/other.json'),env)).status,404);
+const data=await handle(request('/shanghai-divergence/data/market-abcd1234.json.gz'),env,async()=>new Response('data',{headers:{'set-cookie':'private'}}));assert.equal(data.headers.get('set-cookie'),null);assert.equal(await data.text(),'data');
+console.log('Cloudflare routing, manifest, cache and failure checks passed');

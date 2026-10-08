@@ -8,3 +8,5 @@ dist/
 dist-pages/
 public-pages/data/market-*.json
 .test-artifacts/
+dist-cloudflare/
+.wrangler/

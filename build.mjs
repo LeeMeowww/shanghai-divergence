@@ -5,8 +5,9 @@ import {createRequire} from 'node:module';
 import {dirname} from 'node:path';
 const require=createRequire(import.meta.url);
 const pages=process.env.BUILD_TARGET==='pages';
+const cloud=process.env.BUILD_TARGET==='cloudflare';
 const aliases=Object.fromEntries(['zrender','tslib','scheduler'].map(name=>[name,dirname(require.resolve(name==='tslib'?name:name+'/package.json',{paths:[dirname(require.resolve('echarts/package.json')),dirname(require.resolve('react-dom/package.json'))]}))]));
-await build({configFile:false,base:pages?'./':'/',publicDir:pages?'public-pages':false,resolve:{preserveSymlinks:true,alias:aliases},esbuild:false,
- plugins:[{name:'production-env',enforce:'pre',transform(code,id){if(pages&&id.replaceAll('\\','/').endsWith('/src/runtime.ts'))code=code.replace('STATIC_MODE = false','STATIC_MODE = true');if(/\.[cm]?[jt]sx?$/.test(id))return {code:code.replaceAll('process.env.NODE_ENV','"production"'),map:null}}},{name:'typescript-transpile',transform(code,id){if(/\/src\/.*\.tsx?$/.test(id.replaceAll('\\','/')))return {code:ts.transpileModule(code,{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText,map:null}}}],
- build:{outDir:pages?'dist-pages':'dist',minify:false,cssMinify:false,rollupOptions:{output:{manualChunks:{charts:['echarts']}}}}});
+await build({configFile:false,base:cloud?'/shanghai-divergence/':pages?'./':'/',publicDir:pages?'public-pages':false,resolve:{preserveSymlinks:true,alias:aliases},esbuild:false,
+ plugins:[{name:'production-env',enforce:'pre',transform(code,id){if((pages||cloud)&&id.replaceAll('\\','/').endsWith('/src/runtime.ts')){code=code.replace('STATIC_MODE = false','STATIC_MODE = true');if(cloud)code=code.replace('CLOUD_MODE = false','CLOUD_MODE = true')}if(/\.[cm]?[jt]sx?$/.test(id))return {code:code.replaceAll('process.env.NODE_ENV','"production"'),map:null}}},{name:'typescript-transpile',transform(code,id){if(/\/src\/.*\.tsx?$/.test(id.replaceAll('\\','/')))return {code:ts.transpileModule(code,{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText,map:null}}}],
+ build:{outDir:cloud?'dist-cloudflare':pages?'dist-pages':'dist',minify:false,cssMinify:false,rollupOptions:{output:{manualChunks:{charts:['echarts']}}}}});
 

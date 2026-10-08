@@ -10,6 +10,8 @@ on:
         default: false
   schedule:
     - cron: '17 10 * * 1-5'
+    - cron: '17 12 * * 1-5'
+    - cron: '17 14 * * 1-5'
 
 permissions:
   contents: read
@@ -41,6 +43,7 @@ jobs:
           node node_modules/typescript/bin/tsc --noEmit
           python scripts/parity_fixtures.py
           node scripts/test_static.mjs
+          node scripts/test_cloudflare.mjs
       - name: Preserve the latest published market snapshot
         run: python scripts/restore_published.py
       - name: Collect latest market snapshot
