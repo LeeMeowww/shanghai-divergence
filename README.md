@@ -4,7 +4,7 @@
 
 ## Cloudflare 正式网站
 
-访问 **https://yuki23.me/shanghai-divergence/**。Cloudflare 提供前端和动态行情接口，后台由 GitHub Actions 自动采集数据；无需本机服务。网页每分钟检查新行情批次，并自动按当前已应用的条件重新筛选。后台任务状态无法读取时会明确提示。
+Cloudflare 提供前端和动态行情接口，后台由 GitHub Actions 自动采集数据；无需本机服务。网页每分钟检查新行情批次，并自动按当前已应用的条件重新筛选。后台任务状态无法读取时会明确提示。
 
 部署与路由配置见 [cloudflare/README.md](cloudflare/README.md)。
 
