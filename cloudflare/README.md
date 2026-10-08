@@ -1,4 +1,4 @@
-# yuki23.me 部署
+# **.me 部署
 
 Cloudflare Worker `shanghai-divergence` 提供 `/shanghai-divergence/` 前端和动态 `api/market` 接口。接口实时读取当前已发布行情清单，股票快照按批次缓存；筛选计算在浏览器进行。Python / AKShare 采集仍在 GitHub Actions 后台运行，网站不需要用户电脑在线。
 
@@ -8,8 +8,8 @@ GitHub Actions 在工作日北京时间 18:17、20:17、22:17 尝试更新。交
 
 域名路由（控制台配置，仅连接本 Worker）：
 
-- `yuki23.me/shanghai-divergence`
-- `yuki23.me/shanghai-divergence/*`
+- `**/shanghai-divergence`
+- `**/shanghai-divergence/*`
 
 根域名的既有个人网站继续由原 Worker 提供。不要把整个 `yuki23.me/*` 路由绑定到本 Worker。
 
